@@ -25,76 +25,94 @@ parameter GALBEN_AUTO = 3'b010;
 parameter PIETONI_VERDE = 3'b011;
 parameter PIETONI_CLIPIRE = 3'b100;
 parameter FINAL = 3'b101;
+parameter SERVICE = 3'b110;
 
 // registre stare
 reg [2:0] stare_curenta;
 reg cerere_pietoni;
 
-always @(posedge clk_i or negedge reset_n_i) begin
+//memorare buton pietoni
+always @(posedge clk_i or negedge reset_n_i)
 if(~reset_n_i)             cerere_pietoni <= 0; else
 if(pietoni_btn_i)          cerere_pietoni <= 1; else
-if(stare_curenta == FINAL) cerere_pietoni <= 0;
-end
-    
-
-
-always @(posedge clk_i or negedge reset_n_i) begin
+if(stare_curenta == FINAL) cerere_pietoni <= 0; else
+                           cerere_pietoni <= cerere_pietoni;
+   
+//FSM
+always @(posedge clk_i or negedge reset_n_i)
 if(~reset_n_i) stare_curenta <= IDLE; else
-if (service_i) stare_curenta <= IDLE; else
-    
+if(service_i)  stare_curenta <= SERVICE; else   
 case(stare_curenta)
-    IDLE:        if(start_i)          stare_curenta <= VERDE_AUTO;
-    VERDE_AUTO:  if(timer_done_i)     stare_curenta <= GALBEN_AUTO;
-    GALBEN_AUTO: if(timer_done_i) 
-                 if(cerere_pietoni)   stare_curenta <= PIETONI_VERDE; 
-                 else                 stare_curenta <= FINAL;
-    PIETONI_VERDE: if(timer_done_i)   stare_curenta <= PIETONI_CLIPIRE;
-    PIETONI_CLIPIRE: if(timer_done_i) stare_curenta <= FINAL;
-    FINAL:                            stare_curenta <= IDLE;
+ IDLE:        if(start_i)          stare_curenta <= VERDE_AUTO;
+ VERDE_AUTO:  if(timer_done_i)     stare_curenta <= GALBEN_AUTO;
+ GALBEN_AUTO: if(timer_done_i) 
+              if(cerere_pietoni)   stare_curenta <= PIETONI_VERDE; else 
+                                   stare_curenta <= FINAL;
+ PIETONI_VERDE: if(timer_done_i)   stare_curenta <= PIETONI_CLIPIRE;
+ PIETONI_CLIPIRE: if(timer_done_i) stare_curenta <= FINAL;
+ FINAL:                            stare_curenta <= IDLE;
+ SERVICE:        if(~service_i)    stare_curenta <= IDLE; else
+                                   stare_curenta <= SERVICE;
+ default:                          stare_curenta <= IDLE;
 endcase
-end
 
-//Auto(output)
-always @(posedge clk_i or negedge reset_n_i) begin
-    if(~reset_n_i) rosu_auto_o <= 1  ;
-                   galben_auto_o <= 0;
-                   verde_auto_o <= 0 ; else
-case (stare_curenta)
-IDLE, FINAL: 
-            rosu_auto_o <= 1  ;
-            galben_auto_o <= 0;
-            verde_auto_o <= 0 ;
-VERDE_AUTO:
-            rosu_auto_o <= 0  ;
-            galben_auto_o <= 0;
-            verde_auto_o <= 1 ;
-GALBEN_AUTO:
-            rosu_auto_o <= 0  ;
-            galben_auto_o <= 1; 
-            verde_auto_o <= 0 ;
-    default: 
-            rosu_auto_o <= 1  ;
-            galben_auto_o <= 0;
-            verde_auto_o <= 0 ;
-endcase
-end    
 
-//Pietoni(output)
-always @(posedge clk_i or negedge reset_n_i) begin
-    if(~reset_n_i) rosu_pietoni_o <= 1  ;
-                   verde_pietoni_o <= 0 ; else
+//rosu_auto_o
+always @(posedge clk_i or negedge reset_n_i)
+if(~reset_n_i) rosu_auto_o <= 1; else
 case (stare_curenta)
-PIETONI_VERDE:
-            rosu_pietoni_o <= 0  ;
-            verde_pietoni_o <= 1 ;
-PIETONI_CLIPIRE:
-            rosu_pietoni_o <= 0  ;
-            verde_pietoni_o <= ~verde_pietoni_o ;
-    default:
-            rosu_pietoni_o <= 1  ;
-            verde_pietoni_o <= 0 ;
+ IDLE, FINAL:   rosu_auto_o <= 1;
+ VERDE_AUTO:    rosu_auto_o <= 0;
+ GALBEN_AUTO:   rosu_auto_o <= 0;
+ SERVICE:       rosu_auto_o <= 0;
+ default:       rosu_auto_o <= 1;
+endcase 
+
+
+//galben_auto_o
+always @(posedge clk_i or negedge reset_n_i)
+if(~reset_n_i) galben_auto_o <= 0; else
+case (stare_curenta)
+ IDLE, FINAL:   galben_auto_o <= 0;
+ VERDE_AUTO:    galben_auto_o <= 0;
+ GALBEN_AUTO:   galben_auto_o <= 1;
+ SERVICE:       galben_auto_o <= ~galben_auto_o;
+ default:       galben_auto_o <= 0;
 endcase
-end
+
+//verde_auto_o
+always @(posedge clk_i or negedge reset_n_i)
+if(~reset_n_i) verde_auto_o <= 0; else
+case (stare_curenta)
+ IDLE, FINAL:   verde_auto_o <= 0;
+ VERDE_AUTO:    verde_auto_o <= 1;
+ GALBEN_AUTO:   verde_auto_o <= 0;
+ SERVICE:       verde_auto_o <= 0;
+ default:       verde_auto_o <= 0;
+endcase
+
+//pietoni rosu
+always @(posedge clk_i or negedge reset_n_i) 
+if (~reset_n_i)  rosu_pietoni_o <= 1; else
+case (stare_curenta)
+ PIETONI_VERDE:   rosu_pietoni_o <= 0;
+ PIETONI_CLIPIRE: rosu_pietoni_o <= 0;
+ SERVICE:         rosu_pietoni_o <= 0;
+ default:         rosu_pietoni_o <= 1;
+endcase
+    
+ 
+//pietoni verde
+always @(posedge clk_i or negedge reset_n_i)
+if (~reset_n_i) verde_pietoni_o <= 0; else
+ case (stare_curenta)
+ PIETONI_VERDE:   verde_pietoni_o <= 1;
+ PIETONI_CLIPIRE: verde_pietoni_o <= ~verde_pietoni_o;
+ SERVICE:         verde_pietoni_o <= ~verde_pietoni_o;
+ default:         verde_pietoni_o <= 0;
+endcase
+
+
 
 //final flag
 always @(posedge clk_i or negedge reset_n_i) begin

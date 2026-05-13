@@ -1,23 +1,27 @@
 module tb_intersectie;
-    reg clk;
-    reg reset;
+    reg clk_i;
+    reg reset_n_i;
 
 intersectie uut(
-    .clk_i(clk),
-    .reset_n_i(reset)
+    .clk_i(clk_i),
+    .reset_n_i(reset_n_i)
 );
     
-initial clk = 0;
-always #5 clk = ~clk;
-
 initial begin
-    reset = 0;
-    #20;
-    reset = 1;
+    clk_i = 0;
+    forever #5 clk_i = ~clk_i;
 end
 
+//test
 initial begin
-    #1000;
+    reset_n_i = 0;
+    #20;
+
+    reset_n_i = 1;
+
+    //rulare suficient de lunga
+    #3000;
+
     $stop;
 end
 endmodule
