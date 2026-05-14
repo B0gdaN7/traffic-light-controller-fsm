@@ -1,11 +1,11 @@
-
-module semafor_directie(
+module semafor_directie#(
+    parameter DURATA_VERDE = 20
+)(
     input clk_i,
     input reset_n_i,
     input service_i,
     input start_i,
     input pietoni_btn_i,
-    input timer_done_i,
 
     output reg rosu_auto_o,
     output reg galben_auto_o,
@@ -14,8 +14,7 @@ module semafor_directie(
     output reg rosu_pietoni_o,
     output reg verde_pietoni_o,
 
-    output reg secventa_incheiata_o,
-    output [2:0] stare_curenta_o
+    output reg secventa_incheiata_o
 );
 
 // stari FSM
@@ -30,6 +29,8 @@ parameter SERVICE = 3'b110;
 // registre stare
 reg [2:0] stare_curenta;
 reg cerere_pietoni;
+reg [7:0] timer;
+
 
 //memorare buton pietoni
 always @(posedge clk_i or negedge reset_n_i)
@@ -40,21 +41,43 @@ if(stare_curenta == FINAL) cerere_pietoni <= 0; else
    
 //FSM
 always @(posedge clk_i or negedge reset_n_i)
-if(~reset_n_i) stare_curenta <= IDLE; else
-if(service_i)  stare_curenta <= SERVICE; else   
+if(~reset_n_i)                             stare_curenta <= IDLE; else
+if(service_i)                              stare_curenta <= SERVICE; else
+if(~start_i && stare_curenta != SERVICE)   stare_curenta <= IDLE; else   
 case(stare_curenta)
- IDLE:        if(start_i)          stare_curenta <= VERDE_AUTO;
- VERDE_AUTO:  if(timer_done_i)     stare_curenta <= GALBEN_AUTO;
- GALBEN_AUTO: if(timer_done_i) 
-              if(cerere_pietoni)   stare_curenta <= PIETONI_VERDE; else 
-                                   stare_curenta <= FINAL;
- PIETONI_VERDE: if(timer_done_i)   stare_curenta <= PIETONI_CLIPIRE;
- PIETONI_CLIPIRE: if(timer_done_i) stare_curenta <= FINAL;
- FINAL:                            stare_curenta <= IDLE;
- SERVICE:        if(~service_i)    stare_curenta <= IDLE; else
-                                   stare_curenta <= SERVICE;
- default:                          stare_curenta <= IDLE;
+ IDLE: if(start_i )                         stare_curenta <= VERDE_AUTO; else
+                                            stare_curenta <= IDLE;
+ VERDE_AUTO:  if(timer == DURATA_VERDE - 1) stare_curenta <= GALBEN_AUTO; else
+                                            stare_curenta <= VERDE_AUTO;
+ GALBEN_AUTO: if(timer == 2 - 1)                 
+              if(cerere_pietoni)            stare_curenta <= PIETONI_VERDE; else 
+                                            stare_curenta <= FINAL; else
+                                            stare_curenta <= GALBEN_AUTO;
+ PIETONI_VERDE: if(timer == 12 - 1)         stare_curenta <= PIETONI_CLIPIRE; else
+                                            stare_curenta <= PIETONI_VERDE;
+ PIETONI_CLIPIRE: if(timer == 8 - 1)        stare_curenta <= FINAL; else
+                                            stare_curenta <= PIETONI_CLIPIRE; 
+ FINAL:                                     stare_curenta <= IDLE;
+ SERVICE:        if(~service_i)             stare_curenta <= IDLE; else
+                                            stare_curenta <= SERVICE;
+ default:                                   stare_curenta <= IDLE;
 endcase
+
+always @(posedge clk_i or negedge reset_n_i)
+if(~reset_n_i) timer <= 0; else
+case(stare_curenta)
+  VERDE_AUTO: if(timer == DURATA_VERDE - 1) timer <= 0; else 
+                                            timer <= timer + 1;
+  GALBEN_AUTO:  if(timer == 2 - 1)          timer <= 0; else
+                                            timer <= timer + 1;
+  PIETONI_VERDE: if(timer == 12 - 1)        timer <= 0; else
+                                            timer <= timer + 1; 
+  PIETONI_CLIPIRE: if(timer == 8 - 1)       timer <= 0; else
+                                            timer <= timer + 1;
+ default:                                   timer <= 0;                                                                                                                         
+endcase
+    
+
 
 
 //rosu_auto_o
@@ -121,5 +144,5 @@ if(stare_curenta == FINAL) secventa_incheiata_o <= 1; else
                            secventa_incheiata_o <= 0;
 end
 
-assign stare_curenta_o = stare_curenta;
+
 endmodule
