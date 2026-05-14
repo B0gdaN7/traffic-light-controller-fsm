@@ -3,8 +3,10 @@ module intersectie (
     input reset_n_i
 );
     reg secventa_incheiata;
+    reg service;
 
     wire secventa_N, secventa_S, secventa_E, secventa_V;
+    reg pietoni_N, pietoni_S, pietoni_E, pietoni_V;
 
     wire rosu_auto_N, galben_auto_N, verde_auto_N;
     wire rosu_pietoni_N, verde_pietoni_N;
@@ -66,9 +68,9 @@ endcase
 semafor_directie #(.DURATA_VERDE(17)) semafor_N (
     .clk_i               (clk_i          ),
     .reset_n_i           (reset_n_i      ),
-    .service_i           (0              ),
+    .service_i           (service        ),
     .start_i             (start_N        ),
-    .pietoni_btn_i       (0              ),
+    .pietoni_btn_i       (pietoni_N      ),
     .rosu_auto_o         (rosu_auto_N    ),
     .galben_auto_o       (galben_auto_N  ),
     .verde_auto_o        (verde_auto_N   ),
@@ -79,9 +81,9 @@ semafor_directie #(.DURATA_VERDE(17)) semafor_N (
 semafor_directie #(.DURATA_VERDE(22)) semafor_S (
     .clk_i               (clk_i          ),
     .reset_n_i           (reset_n_i      ),
-    .service_i           (0              ),
+    .service_i           (service        ),
     .start_i             (start_S        ),
-    .pietoni_btn_i       (0              ),
+    .pietoni_btn_i       (pietoni_S      ),
     .rosu_auto_o         (rosu_auto_S    ),
     .galben_auto_o       (galben_auto_S  ),
     .verde_auto_o        (verde_auto_S   ),
@@ -92,9 +94,9 @@ semafor_directie #(.DURATA_VERDE(22)) semafor_S (
 semafor_directie #(.DURATA_VERDE(19)) semafor_E (
     .clk_i               (clk_i          ),
     .reset_n_i           (reset_n_i      ),
-    .service_i           (0              ),
+    .service_i           (service        ),
     .start_i             (start_E        ),
-    .pietoni_btn_i       (0              ),
+    .pietoni_btn_i       (pietoni_E      ),
     .rosu_auto_o         (rosu_auto_E    ),
     .galben_auto_o       (galben_auto_E  ),
     .verde_auto_o        (verde_auto_E   ),
@@ -105,9 +107,9 @@ semafor_directie #(.DURATA_VERDE(19)) semafor_E (
 semafor_directie #(.DURATA_VERDE(20)) semafor_V (
     .clk_i               (clk_i          ),
     .reset_n_i           (reset_n_i      ),
-    .service_i           (0              ),
+    .service_i           (service        ),
     .start_i             (start_V        ),
-    .pietoni_btn_i       (0              ),
+    .pietoni_btn_i       (pietoni_V      ),
     .rosu_auto_o         (rosu_auto_V    ),
     .galben_auto_o       (galben_auto_V  ),
     .verde_auto_o        (verde_auto_V   ),
@@ -115,4 +117,16 @@ semafor_directie #(.DURATA_VERDE(20)) semafor_V (
     .verde_pietoni_o     (verde_pietoni_V),
     .secventa_incheiata_o(secventa_V     )
 );
+
+wire clk1_hz;
+
+clock_divider#(
+    .MAX(5000000 - 1)
+)
+div_fsm(
+    .clk_i(clk_i),
+    .reset_n_i(reset_n_i),
+    .clk_o(clk1_hz)
+);
+
 endmodule
