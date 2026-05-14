@@ -48,9 +48,9 @@ if(service_i)  start_anterior <= 0; else
 
 //FSM
 always @(posedge clk_i or negedge reset_n_i)
-if(~reset_n_i)                             stare_curenta <= IDLE; else
-if(service_i)                              stare_curenta <= SERVICE; else
-if(~start_i && stare_curenta != SERVICE)   stare_curenta <= IDLE; else   
+if(~reset_n_i)                              stare_curenta <= IDLE; else
+if(service_i)                               stare_curenta <= SERVICE; else
+if(~start_i && stare_curenta != SERVICE)    stare_curenta <= IDLE; else   
 case(stare_curenta)
  IDLE: if(start_i && ~start_anterior)       stare_curenta <= VERDE_AUTO; else
                                             stare_curenta <= IDLE;
@@ -72,7 +72,7 @@ case(stare_curenta)
 endcase
 
 always @(posedge clk_i or negedge reset_n_i)
-if(~reset_n_i) timer <= 0; else
+if(~reset_n_i)                             timer <= 0; else
 case(stare_curenta)
  VERDE_AUTO: if(timer == DURATA_VERDE - 1) timer <= 0; else 
                                            timer <= timer + 1;
@@ -90,7 +90,7 @@ endcase
 
 always @(*)
 case(stare_curenta)
- IDLE: rosu_auto_o = 1;
+ IDLE:        rosu_auto_o = 1;
  VERDE_AUTO:  rosu_auto_o = 0;
  GALBEN_AUTO: rosu_auto_o = 0;
  SERVICE:     rosu_auto_o = 0;
@@ -99,24 +99,24 @@ endcase
 
 always @(*) 
 case (stare_curenta)
- GALBEN_AUTO:   galben_auto_o = 1;
- SERVICE:       galben_auto_o = timer[0];
- default:       galben_auto_o = 0;
+ GALBEN_AUTO: galben_auto_o = 1;
+ SERVICE:     galben_auto_o = timer[0];
+ default:     galben_auto_o = 0;
 endcase 
 
 always @(*)
 case (stare_curenta)
- VERDE_AUTO:    verde_auto_o = 1;
- default:       verde_auto_o = 0;
+ VERDE_AUTO: verde_auto_o = 1;
+ default:    verde_auto_o = 0;
 endcase
 
 
 always @(*) begin
- secventa_incheiata_o = 0;
+                                                    secventa_incheiata_o = 0;
 case(stare_curenta)
  GALBEN_AUTO: if(timer == 2 - 1 && !cerere_pietoni) secventa_incheiata_o = 1;
- PIETONI_CLIPIRE: if(timer == 8 - 1) secventa_incheiata_o = 1;
- default: secventa_incheiata_o = 0;
+ PIETONI_CLIPIRE: if(timer == 8 - 1)                secventa_incheiata_o = 1;
+ default:                                           secventa_incheiata_o = 0;
 endcase
 end
     

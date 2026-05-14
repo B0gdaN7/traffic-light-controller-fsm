@@ -57,11 +57,11 @@ start_V = (directie_curenta == VEST);
 always @(posedge clk_i or negedge reset_n_i)
 if(~reset_n_i) secventa_incheiata <= 0; else
 case(directie_curenta)
- NORD:   secventa_incheiata <= secventa_N;
- SUD:    secventa_incheiata <= secventa_S;
- EST:    secventa_incheiata <= secventa_E;
- VEST:   secventa_incheiata <= secventa_V;
-default: secventa_incheiata <= 0;
+ NORD:         secventa_incheiata <= secventa_N;
+ SUD:          secventa_incheiata <= secventa_S;
+ EST:          secventa_incheiata <= secventa_E;
+ VEST:         secventa_incheiata <= secventa_V;
+default:       secventa_incheiata <= 0;
 endcase   
 
 

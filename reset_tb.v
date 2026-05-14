@@ -10,24 +10,24 @@ intersectie UUT (
 always #5 clk_i = ~clk_i;
 
 initial begin
-    clk_i = 0;
-    reset_n_i = 0;
-    
-    UUT.pietoni_N = 0;
-    UUT.pietoni_S = 0;
-    UUT.pietoni_E = 0;
-    UUT.pietoni_V = 0;
+ clk_i = 0;
+ reset_n_i = 0;
+ 
+ UUT.pietoni_N = 0;
+ UUT.pietoni_S = 0;
+ UUT.pietoni_E = 0;
+ UUT.pietoni_V = 0;
 
-repeat(2) @(posedge clk_i);
-reset_n_i = 1;
-
-repeat(15) @(posedge clk_i);
-reset_n_i = 0;
-
-repeat(2) @(posedge clk_i);
-reset_n_i = 1;
-
-repeat(200) @(posedge clk_i);
+ repeat(2) @(posedge clk_i);
+ reset_n_i = 1;
+ 
+ repeat(15) @(posedge clk_i);
+ reset_n_i = 0;
+ 
+ repeat(2) @(posedge clk_i);
+ reset_n_i = 1;
+ 
+ repeat(200) @(posedge clk_i);
 
 $stop;
 end
