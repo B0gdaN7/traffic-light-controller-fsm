@@ -39,6 +39,7 @@ if(pietoni_btn_i)          cerere_pietoni <= 1; else
 if(stare_curenta == IDLE)  cerere_pietoni <= 0; else
                            cerere_pietoni <= cerere_pietoni;
 
+//detecteaza front de start
 always @(posedge clk_i or negedge reset_n_i)
 if(~reset_n_i) start_anterior <= 0; else
 if(service_i)  start_anterior <= 0; else             
@@ -56,13 +57,13 @@ case(stare_curenta)
                                             stare_curenta <= IDLE;
  VERDE_AUTO:  if(timer == DURATA_VERDE - 1) stare_curenta <= GALBEN_AUTO; else
                                             stare_curenta <= VERDE_AUTO;
- GALBEN_AUTO: if(timer == 2 - 1)                 
+ GALBEN_AUTO: if(timer == 1)                 
               if(cerere_pietoni)            stare_curenta <= PIETONI_VERDE; else 
                                             stare_curenta <= IDLE; else
                                             stare_curenta <= GALBEN_AUTO;
- PIETONI_VERDE: if(timer == 12 - 1)         stare_curenta <= PIETONI_CLIPIRE; else
+ PIETONI_VERDE: if(timer == 11)             stare_curenta <= PIETONI_CLIPIRE; else
                                             stare_curenta <= PIETONI_VERDE;
- PIETONI_CLIPIRE: if(timer == 8 - 1)        stare_curenta <= IDLE; else
+ PIETONI_CLIPIRE: if(timer == 7)            stare_curenta <= IDLE; else
                                             stare_curenta <= PIETONI_CLIPIRE; 
  SERVICE: if(~service_i) 
           if(start_i)                       stare_curenta <= VERDE_AUTO; else
@@ -71,23 +72,26 @@ case(stare_curenta)
  default:                                   stare_curenta <= IDLE;
 endcase
 
+
+//timer
 always @(posedge clk_i or negedge reset_n_i)
 if(~reset_n_i)                             timer <= 0; else
 case(stare_curenta)
  VERDE_AUTO: if(timer == DURATA_VERDE - 1) timer <= 0; else 
                                            timer <= timer + 1;
- GALBEN_AUTO:  if(timer == 2 - 1)          timer <= 0; else
+ GALBEN_AUTO:  if(timer == 1)              timer <= 0; else
                                            timer <= timer + 1;
- PIETONI_VERDE: if(timer == 12 - 1)        timer <= 0; else
+ PIETONI_VERDE: if(timer == 11)            timer <= 0; else
                                            timer <= timer + 1; 
- PIETONI_CLIPIRE: if(timer == 8 - 1)       timer <= 0; else
+ PIETONI_CLIPIRE: if(timer == 7)           timer <= 0; else
                                            timer <= timer + 1;
  SERVICE:  if(~service_i)                  timer <= 0; else
                                            timer <= timer + 1;
  default:                                  timer <= 0;                                                                                                                         
 endcase
-    
 
+
+//outputuri
 always @(*)
 case(stare_curenta)
  IDLE:        rosu_auto_o = 1;
@@ -111,15 +115,18 @@ case (stare_curenta)
 endcase
 
 
+//secventa_incheiata_o
 always @(*) begin
-                                                    secventa_incheiata_o = 0;
+                                                secventa_incheiata_o = 0;
 case(stare_curenta)
- GALBEN_AUTO: if(timer == 2 - 1 && !cerere_pietoni) secventa_incheiata_o = 1;
- PIETONI_CLIPIRE: if(timer == 8 - 1)                secventa_incheiata_o = 1;
- default:                                           secventa_incheiata_o = 0;
+ GALBEN_AUTO: if(timer == 1 && !cerere_pietoni) secventa_incheiata_o = 1;
+ PIETONI_CLIPIRE: if(timer == 7)                secventa_incheiata_o = 1;
+ default:                                       secventa_incheiata_o = 0;
 endcase
 end
-    
+
+
+//output pietoni   
 always @(*)
 case(stare_curenta)
  PIETONI_VERDE:   rosu_pietoni_o = 0;
@@ -135,5 +142,16 @@ case(stare_curenta)
  SERVICE:         verde_pietoni_o = timer[0];
  default:         verde_pietoni_o = 0;
 endcase
+
+//clock pt verde intermitent 0.5 Hz
+wire clk05_hz; // inlocuim cu timer[0]
+clock_divider #(
+    .MAX(10000000 -1)
+) 
+div_clipire(
+ .clk_i(clk_i),
+ .reset_n_i(reset_n_i),
+ .clk_o(clk05_hz)
+);
 
 endmodule

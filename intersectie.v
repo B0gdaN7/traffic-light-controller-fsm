@@ -119,7 +119,7 @@ semafor_directie #(.DURATA_VERDE(20)) semafor_V (
 );
 
 wire clk1_hz;
-
+// clock divider  10Mhz -> 1hz
 clock_divider#(
     .MAX(5000000 - 1)
 )
@@ -128,5 +128,6 @@ div_fsm(
     .reset_n_i(reset_n_i),
     .clk_o(clk1_hz)
 );
+
 
 endmodule
